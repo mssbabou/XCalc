@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:math_expressions/math_expressions.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const Calculator());
@@ -10,6 +11,7 @@ void main() {
     appWindow.minSize = initialSize;
     appWindow.size = initialSize;
     appWindow.alignment = Alignment.center;
+    appWindow.title = "XCalc";
     appWindow.show();
   });
 }
@@ -29,37 +31,32 @@ class _CalculatorState extends State<Calculator> {
   }
 
   void Update(String input){
+    Outputs.clear();
     List<String> lines = input.split("\n");
 
-    List<String> ?results;
     ContextModel cm = ContextModel();
-    lines.forEach((line) {
-      //line = line.replaceAll(' ', '');
-      if(line != ''){
+    for (int i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      String res = '';
         try {
           Parser p = Parser();
           Expression exp = p.parse(line);
-          double res = exp.evaluate(EvaluationType.REAL, cm);
-          print('$line = $res');
-          results?.add('$res');          
+          res = exp.evaluate(EvaluationType.REAL, cm).toString();
+          res = removePoint0(res);     
         } catch (e) {
-          print('$line = error');
-          results?.add('');
+          res = '';
         }
-      } 
-    });
-
-    UpdateOutputs(lines, results!);
-  }
-
-  void UpdateOutputs(List<String> input, List<String> results){
-    Outputs?.clear();
-    for (var i = 0; i < input.length; i++) {
-      Outputs?.add(Output(input: input[i], result: results[i]));
+        Outputs.add(Output(input: line, result: res));
     }
   }
 
-  List<Widget> ?Outputs;
+  String removePoint0(dynamic num) {
+    RegExp regex = RegExp(r'([.]*0)(?!.*\d)');
+    return num.toString().replaceAll(regex, '');
+  }
+
+
+  List<Widget> Outputs = [];
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -69,7 +66,7 @@ class _CalculatorState extends State<Calculator> {
             children: [
               WindowTitleBarBox(
                 child: Container(
-                  color: Color.fromARGB(255, 50, 50, 50),
+                  color: const Color.fromARGB(255, 50, 50, 50),
                   child: Row(
                     children: [
                       Expanded(
@@ -86,17 +83,12 @@ class _CalculatorState extends State<Calculator> {
                   padding: const EdgeInsets.all(8.0),
                   child: Stack(
                     children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        child: Column(
-                          children: Outputs!,
-                        ),
-                      ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(0, 4.0, 0, 0),
                         child: TextField(
                           onChanged: (value) {
                             Update(value);
+                            setState(() {});
                           },
                             maxLines: null,
                             expands: true,
@@ -109,6 +101,9 @@ class _CalculatorState extends State<Calculator> {
                             hintText: '',
                           ),
                         ),
+                      ),
+                      Column(
+                        children: Outputs,
                       ),
                     ],
                   ),
@@ -133,17 +128,46 @@ class Output extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(
-          fontSize: 20,
-          color: Color.fromARGB(255, 72, 194, 173)
+    return Row(
+      children: [
+        IgnorePointer(
+          child: Text(
+            input,
+            style: TextStyle(
+              fontSize: 20,
+              color: Color.fromARGB(0, 0, 0, 0)
+            ),
+          ),
         ),
-        children: <TextSpan>[
-          TextSpan(text: input, style:  TextStyle(color: Color(0x00000000))),
-          TextSpan(text: result)
-        ]
-      ),
+        IgnorePointer(
+          child: Text(
+            result == ''? '' : ' = ',
+            style: TextStyle(
+              fontSize: 20,
+              color: Color.fromARGB(255, 72, 194, 173)
+            ),
+          ),
+        ),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          child: TextButton(
+            onPressed: () async{
+              await Clipboard.setData(ClipboardData(text: result));
+            },
+            style: TextButton.styleFrom(
+              minimumSize: Size.zero,
+              padding: EdgeInsets.all(1.0)
+            ),
+            child: Text(
+              result,
+              style: TextStyle(
+                fontSize: 20,
+                color: Color.fromARGB(255, 72, 194, 173)              
+              ),
+            )
+          ),
+        ),
+      ],
     );
   }
 }
