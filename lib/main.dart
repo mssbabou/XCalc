@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:flutter/services.dart';
+import 'dart:math';
 
 void main() {
   runApp(const Calculator());
@@ -38,10 +39,12 @@ class _CalculatorState extends State<Calculator> {
     for (int i = 0; i < lines.length; i++) {
       var line = lines[i];
       String res = '';
+      double num = 0;
         try {
           Parser p = Parser();
           Expression exp = p.parse(line);
-          res = exp.evaluate(EvaluationType.REAL, cm).toString();
+          num = exp.evaluate(EvaluationType.REAL, cm);
+          res = num.toStringAsFixed(7);
           res = removePoint0(res);     
         } catch (e) {
           res = '';
@@ -50,11 +53,34 @@ class _CalculatorState extends State<Calculator> {
     }
   }
 
+  String removeDecimals(String input, int cutOff){
+    String newInput = '';
+    int zeros = 0;
+    for (var i = 0; i < input.length; i++) {
+      if(input[i] == '0'){
+        zeros++;
+      }else{
+        zeros = 0;
+        String zeroString = '';
+        for (var i = 0; i < zeros; i++) {
+          zeroString += '0';
+        }
+        newInput = zeroString + newInput + input[i];
+      }
+
+      if(zeros >= cutOff-1){
+        return newInput;
+      }
+
+    }
+
+    return input;
+  }
+
   String removePoint0(dynamic num) {
     RegExp regex = RegExp(r'([.]*0)(?!.*\d)');
     return num.toString().replaceAll(regex, '');
   }
-
 
   List<Widget> Outputs = [];
   @override
