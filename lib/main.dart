@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:flutter/services.dart';
-import 'dart:math';
+import 'dart:core';
 
 void main() {
   runApp(const Calculator());
@@ -25,6 +25,7 @@ class Calculator extends StatefulWidget {
 }
 
 class _CalculatorState extends State<Calculator> {
+  ContextModel cm = ContextModel();
 
   @override
   void initState() {
@@ -32,25 +33,77 @@ class _CalculatorState extends State<Calculator> {
   }
 
   void Update(String input){
+    DateTime t0 = DateTime.now();
     Outputs.clear();
     List<String> lines = input.split("\n");
 
-    ContextModel cm = ContextModel();
     for (int i = 0; i < lines.length; i++) {
       var line = lines[i];
-      String res = '';
-      double num = 0;
-        try {
-          Parser p = Parser();
-          Expression exp = p.parse(line);
-          num = exp.evaluate(EvaluationType.REAL, cm);
-          res = num.toStringAsFixed(7);
-          res = removePoint0(res);     
-        } catch (e) {
-          res = '';
+
+        // Check if line is valid equation
+        String result = CalculateExpression(line);
+        if(result == ''){
+          result = GetVarible(line);
         }
-        Outputs.add(Output(input: line, result: res));
+
+        Outputs.add(Output(input: line, result: result));
     }
+    DateTime t1 = DateTime.now();
+    //print(t1.microsecond - t0.microsecond);
+  }
+
+  String CalculateExpression(String line){
+      String result = '';
+      double number = 0;
+
+      try {
+        Parser p = Parser();
+        Expression exp = p.parse(line);
+        number = exp.evaluate(EvaluationType.REAL, cm);
+        result = number.toString();
+        result = removePoint0(result);        
+      } catch (e) {
+        result = '';
+      }
+
+      return result;    
+  }
+
+  String GetVarible(String _line){
+    if(!_line.contains('=')){
+      return '';
+    }
+    
+    String line = _line.trim();
+    List<String> expressions = line.split('=');
+
+    if(expressions.length != 2){
+      return '';
+    }
+
+    expressions[0] = expressions[0].trim();
+    expressions[1] = expressions[1].trim();
+
+    if(!RegExp(r'^[a-zA-Z]+[a-z]*$').hasMatch(expressions[0])){
+      return '';
+    }
+
+    String oldExp = expressions[1];
+    expressions[1] = CalculateExpression(expressions[1]);
+
+    if(expressions[1] == ''){
+      return '';
+    }
+
+    Expression exp = Parser().parse(expressions[1]);
+    cm.bindVariable(Variable(expressions[0]), exp);
+
+    if(oldExp == expressions[1]){
+      return '';
+    }else{
+      return expressions[1];
+    }
+
   }
 
   String removeDecimals(String input, int cutOff){
@@ -80,6 +133,13 @@ class _CalculatorState extends State<Calculator> {
   String removePoint0(dynamic num) {
     RegExp regex = RegExp(r'([.]*0)(?!.*\d)');
     return num.toString().replaceAll(regex, '');
+  }
+
+  bool isNumeric(String s) {
+    if (s == null) {
+      return false;
+    }
+    return double.tryParse(s) != null;
   }
 
   List<Widget> Outputs = [];
@@ -159,7 +219,7 @@ class Output extends StatelessWidget {
         IgnorePointer(
           child: Text(
             input,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               color: Color.fromARGB(0, 0, 0, 0)
             ),
@@ -168,7 +228,7 @@ class Output extends StatelessWidget {
         IgnorePointer(
           child: Text(
             result == ''? '' : ' = ',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               color: Color.fromARGB(255, 72, 194, 173)
             ),
@@ -182,11 +242,11 @@ class Output extends StatelessWidget {
             },
             style: TextButton.styleFrom(
               minimumSize: Size.zero,
-              padding: EdgeInsets.all(1.0)
+              padding: const EdgeInsets.all(1.0)
             ),
             child: Text(
               result,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 20,
                 color: Color.fromARGB(255, 72, 194, 173)              
               ),
@@ -205,9 +265,9 @@ class WindowButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        MinimizeWindowButton(colors: WindowButtonColors(iconNormal: Color.fromARGB(255, 255, 255, 255))),
-        MaximizeWindowButton(colors: WindowButtonColors(iconNormal: Color.fromARGB(255, 255, 255, 255))),
-        CloseWindowButton(colors: WindowButtonColors(iconNormal: Color.fromARGB(255, 255, 255, 255)))
+        MinimizeWindowButton(colors: WindowButtonColors(iconNormal: const Color.fromARGB(255, 255, 255, 255))),
+        MaximizeWindowButton(colors: WindowButtonColors(iconNormal: const Color.fromARGB(255, 255, 255, 255))),
+        CloseWindowButton(colors: WindowButtonColors(iconNormal: const Color.fromARGB(255, 255, 255, 255)))
       ],
     );
   }
