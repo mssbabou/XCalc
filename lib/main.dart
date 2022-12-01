@@ -1,11 +1,20 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:flutter/services.dart';
+import 'package:decimal/decimal.dart';
 import 'dart:core';
 import 'dart:math' as math;
 
+SavedSettings settings = SavedSettings('');
+Map<String, dynamic> settingsMap = {};
+bool autosave = true;
+
 void main() {
+  ReadSettings();
+
   runApp(const Calculator());
 
   doWhenWindowReady(() {
@@ -16,6 +25,44 @@ void main() {
     appWindow.title = "XCalc";
     appWindow.show();
   });
+}
+
+void ReadSettings() {
+  // For Tesing "C:/Users/mssba/Desktop/Programming1/Code/Better Calculator/xcalc/build/windows/runner/Release/save.json"
+  //final File file = File("save.json");
+  final File file = File("C:/Users/mssba/Desktop/Programming1/Code/Better Calculator/xcalc/build/windows/runner/Release/save.json");
+  settingsMap = jsonDecode(file.readAsStringSync());
+  settings = SavedSettings.fromJson(settingsMap);
+  
+  if(settings.input == ''){
+    autosave = false;
+  }
+}
+
+void WriteSettings() {
+  if(!autosave){
+    settings.input = '';
+  }
+
+  settingsMap = settings.toJson();
+  // For Tesing "C:/Users/mssba/Desktop/Programming1/Code/Better Calculator/xcalc/build/windows/runner/Release/save.json"
+  //final File file = File("save.json");
+  final File file = File("C:/Users/mssba/Desktop/Programming1/Code/Better Calculator/xcalc/build/windows/runner/Release/save.json");
+  file.writeAsStringSync(jsonEncode(settingsMap));
+}
+
+class SavedSettings {
+  String input = '';
+
+  SavedSettings(this.input);
+
+  SavedSettings.fromJson(Map<String, dynamic> json)
+    : input  = json['input'];
+
+  Map<String, dynamic> toJson() => {
+        'input' : input
+      };
+
 }
 
 class Calculator extends StatefulWidget {
@@ -30,11 +77,14 @@ class _CalculatorState extends State<Calculator> {
 
   @override
   void initState() {
+    Update(settings.input);
     super.initState();
   }
 
+  
+
   void Update(String input) {
-    DateTime t0 = DateTime.now();
+    settings.input = input;
     Outputs.clear();
     List<String> lines = input.split("\n");
 
@@ -51,8 +101,6 @@ class _CalculatorState extends State<Calculator> {
 
       Outputs.add(Output(input: line, result: result));
     }
-    DateTime t1 = DateTime.now();
-    //print(t1.microsecond - t0.microsecond);
   }
 
   void BlankContext() {
@@ -63,14 +111,14 @@ class _CalculatorState extends State<Calculator> {
 
   String CalculateExpression(String line) {
     String result = '';
-    double number = 0;
 
     try {
       Parser p = Parser();
       Expression exp = p.parse(line);
-      number = exp.evaluate(EvaluationType.REAL, cm);
-      result = number.toString();
+      result = exp.evaluate(EvaluationType.REAL, cm).toString();
+      //Decimal res = exp.evaluate(EvaluationType.REAL, cm);
       result = removePoint0(result);
+      //print(res);
     } catch (e) {
       result = '';
     }
@@ -150,6 +198,7 @@ class _CalculatorState extends State<Calculator> {
   }
 
   List<Widget> Outputs = [];
+  //bool saveButton = false;
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -159,9 +208,10 @@ class _CalculatorState extends State<Calculator> {
           children: [
             WindowTitleBarBox(
               child: Container(
-                color: const Color.fromARGB(255, 50, 50, 50),
+                color: Color.fromARGB(255, 50, 50, 50),
                 child: Row(
                   children: [
+                    AutoSaveButton(),
                     Expanded(child: MoveWindow()),
                     const WindowButtons()
                   ],
@@ -176,7 +226,8 @@ class _CalculatorState extends State<Calculator> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(0, 4.0, 0, 0),
-                      child: TextField(
+                      child: TextFormField(
+                        initialValue: settings.input,
                         onChanged: (value) {
                           Update(value);
                           setState(() {});
@@ -262,9 +313,50 @@ class WindowButtons extends StatelessWidget {
             colors: WindowButtonColors(
                 iconNormal: const Color.fromARGB(255, 255, 255, 255))),
         CloseWindowButton(
-            colors: WindowButtonColors(
-                iconNormal: const Color.fromARGB(255, 255, 255, 255)))
+            colors: WindowButtonColors(iconNormal: const Color.fromARGB(255, 255, 255, 255)),
+            onPressed: () {
+              WriteSettings();
+              appWindow.close();    
+            },
+        ),
       ],
+    );
+  }
+}
+
+class AutoSaveButton extends StatefulWidget {
+  AutoSaveButton({super.key});
+
+  static const Color onColor = Color.fromARGB(255, 30, 189, 229);
+  static const Color offColor = Color.fromARGB(255, 190, 190, 190);
+
+  @override
+  State<AutoSaveButton> createState() => _AutoSaveButtonState();
+}
+
+class _AutoSaveButtonState extends State<AutoSaveButton> {
+  Color currentColor = autosave ? AutoSaveButton.onColor : AutoSaveButton.offColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(onPressed: (() {
+      if(autosave){
+        autosave = false;
+        currentColor = AutoSaveButton.offColor;
+      }else{
+        autosave = true;
+        currentColor = AutoSaveButton.onColor;
+      }
+      setState(() {});
+      print(autosave);
+    }), 
+      tooltip: 'Autosave',
+      padding: EdgeInsets.zero,
+      splashRadius: 15,
+      iconSize: 20,
+      //hoverColor: Color.fromARGB(255, 255, 255, 255),
+      color: currentColor,
+      icon: Icon(Icons.save_outlined)
     );
   }
 }
