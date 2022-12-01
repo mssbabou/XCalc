@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:flutter/services.dart';
-import 'package:decimal/decimal.dart';
 import 'dart:core';
 import 'dart:math' as math;
 
@@ -74,6 +73,7 @@ class Calculator extends StatefulWidget {
 
 class _CalculatorState extends State<Calculator> {
   ContextModel cm = ContextModel();
+  List<Widget> outputs = [];
 
   @override
   void initState() {
@@ -85,7 +85,7 @@ class _CalculatorState extends State<Calculator> {
 
   void Update(String input) {
     settings.input = input;
-    Outputs.clear();
+    outputs.clear();
     List<String> lines = input.split("\n");
 
     BlankContext();
@@ -99,7 +99,7 @@ class _CalculatorState extends State<Calculator> {
         result = GetVarible(line);
       }
 
-      Outputs.add(Output(input: line, result: result));
+      outputs.add(Output(input: line, result: result));
     }
   }
 
@@ -190,27 +190,19 @@ class _CalculatorState extends State<Calculator> {
     return num.toString().replaceAll(regex, '');
   }
 
-  bool isNumeric(String s) {
-    if (s == null) {
-      return false;
-    }
-    return double.tryParse(s) != null;
-  }
-
-  List<Widget> Outputs = [];
-  //bool saveButton = false;
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        backgroundColor: const Color.fromARGB(255, 30, 30, 30),
+        backgroundColor: Color.fromARGB(255, 30, 30, 30),
         body: Column(
           children: [
             WindowTitleBarBox(
-              child: Container(
+              child: Material(
                 color: Color.fromARGB(255, 50, 50, 50),
                 child: Row(
                   children: [
+                    SettingsButton(),
                     AutoSaveButton(),
                     Expanded(child: MoveWindow()),
                     const WindowButtons()
@@ -243,7 +235,7 @@ class _CalculatorState extends State<Calculator> {
                       ),
                     ),
                     Column(
-                      children: Outputs,
+                      children: outputs,
                     ),
                   ],
                 ),
@@ -324,6 +316,26 @@ class WindowButtons extends StatelessWidget {
   }
 }
 
+class SettingsButton extends StatelessWidget {
+  const SettingsButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: (() {
+        print('open settings');
+      }),
+      tooltip: 'Settings',
+      padding: EdgeInsets.fromLTRB(7.0, 0.0, 0.0, 0.0),
+      constraints: BoxConstraints(),
+      splashRadius: 15,
+      iconSize: 20, 
+      color: Color.fromARGB(255, 190, 190, 190),
+      icon: Icon(Icons.settings)
+    );
+  }
+}
+
 class AutoSaveButton extends StatefulWidget {
   AutoSaveButton({super.key});
 
@@ -348,10 +360,11 @@ class _AutoSaveButtonState extends State<AutoSaveButton> {
         currentColor = AutoSaveButton.onColor;
       }
       setState(() {});
-      print(autosave);
+      print('autosave = $autosave');
     }), 
       tooltip: 'Autosave',
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.fromLTRB(7.0, 0.0, 0.0, 0.0),
+      constraints: BoxConstraints(),
       splashRadius: 15,
       iconSize: 20,
       //hoverColor: Color.fromARGB(255, 255, 255, 255),
