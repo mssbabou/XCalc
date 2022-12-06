@@ -5,7 +5,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:math_expressions/math_expressions.dart';
 import 'package:flutter/services.dart';
 import 'dart:core';
-import 'dart:math' as math;
+import 'dart:math' as mathf;
 
 SavedSettings settings = SavedSettings('');
 Map<String, dynamic> settingsMap = {};
@@ -105,8 +105,8 @@ class _CalculatorState extends State<Calculator> {
 
   void BlankContext() {
     cm = ContextModel();
-    cm.bindVariable(Variable('pi'), Number(math.pi));
-    cm.bindVariable(Variable('PI'), Number(math.pi));
+    cm.bindVariable(Variable('pi'), Number(mathf.pi));
+    cm.bindVariable(Variable('PI'), Number(mathf.pi));
   }
 
   String CalculateExpression(String line) {
@@ -194,15 +194,15 @@ class _CalculatorState extends State<Calculator> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        backgroundColor: Color.fromARGB(255, 30, 30, 30),
+        backgroundColor: const Color.fromARGB(255, 30, 30, 30),
         body: Column(
           children: [
             WindowTitleBarBox(
               child: Material(
-                color: Color.fromARGB(255, 50, 50, 50),
+                color: const Color.fromARGB(255, 50, 50, 50),
                 child: Row(
                   children: [
-                    SettingsButton(),
+                    const SettingsButton(),
                     AutoSaveButton(),
                     Expanded(child: MoveWindow()),
                     const WindowButtons()
@@ -326,12 +326,12 @@ class SettingsButton extends StatelessWidget {
         print('open settings');
       }),
       tooltip: 'Settings',
-      padding: EdgeInsets.fromLTRB(7.0, 0.0, 0.0, 0.0),
-      constraints: BoxConstraints(),
+      padding: const EdgeInsets.fromLTRB(7.0, 0.0, 0.0, 0.0),
+      constraints: const BoxConstraints(),
       splashRadius: 15,
       iconSize: 20, 
-      color: Color.fromARGB(255, 190, 190, 190),
-      icon: Icon(Icons.settings)
+      color: const Color.fromARGB(255, 190, 190, 190),
+      icon: const Icon(Icons.settings)
     );
   }
 }
@@ -363,13 +363,13 @@ class _AutoSaveButtonState extends State<AutoSaveButton> {
       print('autosave = $autosave');
     }), 
       tooltip: 'Autosave',
-      padding: EdgeInsets.fromLTRB(7.0, 0.0, 0.0, 0.0),
-      constraints: BoxConstraints(),
+      padding: const EdgeInsets.fromLTRB(7.0, 0.0, 0.0, 0.0),
+      constraints: const BoxConstraints(),
       splashRadius: 15,
       iconSize: 20,
       //hoverColor: Color.fromARGB(255, 255, 255, 255),
       color: currentColor,
-      icon: Icon(Icons.save_outlined)
+      icon: const Icon(Icons.save_outlined)
     );
   }
 }
